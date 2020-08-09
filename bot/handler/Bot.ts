@@ -3,9 +3,10 @@ import * as path from "path";
 import fs from "fs";
 import CommandParams from "./CommandParams";
 import { createConnection } from "typeorm";
-import express from "express";
-import http from "http";
+import http, { createServer } from "http";
 import { CronJob } from 'cron';
+import { parse } from 'url';
+import next from 'next';
 
 export interface BotOptions {
     apikeys: {
@@ -97,14 +98,24 @@ export default class Bot extends CommandClient {
         return this;
     }
 
-    private addExpressListener(): this {
-        const app = express();
+    private async addNextJsServer(): Promise<this> {
+        const dev = process.env.NODE_ENV !== 'production';
+        const app = next({ dev, dir: './dashboard' });
+        await app.prepare();
+        const handle = app.getRequestHandler();
+        createServer((req, res) => {
+            const parsedUrl = parse(req.url!, true);
+            const { pathname, query } = parsedUrl;
 
-        app.get(`/`, (request, response) => {
-            response.sendStatus(200);
-        });
+            if(pathname === '/health-check') {
+                res.write('OK');
+                res.end();
+            }
+            else {
+                handle(req, res, parsedUrl)
+            }
+        }).listen(process.env.PORT); // TODO: Maybe store port in config.ts
 
-        app.listen(process.env.PORT);
 
         setInterval(() => {
             http.get(`http://${process.env.PROJECT_DOMAIN}.glitch.me/`);
@@ -181,8 +192,8 @@ export default class Bot extends CommandClient {
     public init(): void {
         this.loadCommands()
             .loadEvents()
-            .addExpressListener()
-            .loadEntities()
+            .addNextJsServer()
+            .then(client => client.loadEntities())
             .then(client => client.loadGuildSettings())
             .then(client => client.connect());
     }

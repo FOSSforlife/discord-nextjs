@@ -4,3 +4,5 @@ config.json
 dist
 .env
 database.sqlite
+
+.next

@@ -11,7 +11,8 @@ export default class PingCommand extends CommandParams {
     }
 
     public async execute(message: Message): Promise<void> {
-        await message.channel.createMessage(`Pong!`);
+        await message.channel.createMessage('Pong!');
+        // console.log(response);
     }
 
 }

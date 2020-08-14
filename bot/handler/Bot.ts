@@ -51,7 +51,7 @@ export default class Bot extends CommandClient {
     private loadCommands(dir: string = path.join(__dirname, `..`, `commands`)): this {
         const files = fs.readdirSync(dir);
         files.forEach(file => {
-            if (file.endsWith(`.js`) || file.endsWith(`.ts`)) {
+            if ((file.endsWith(`.js`) || file.endsWith(`.ts`)) && !file.endsWith('.test.ts')) {
                 const CommandParam = require(path.join(dir, file)).default;
                 const cParams: CommandParams = new CommandParam();
                 const command = this.registerCommand(cParams.name, cParams.execute as CommandGenerator, cParams.options);
